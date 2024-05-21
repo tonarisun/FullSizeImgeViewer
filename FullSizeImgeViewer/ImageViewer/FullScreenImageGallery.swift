@@ -15,9 +15,6 @@ struct FullScreenImageGallery: View {
     @State var currentPage: Int
     let imagesUrls: [String]
     
-    @State private var imagesLoaded = false
-    @State private var images = [UIImage]()
-    
     // MARK: - Init
     init(showView: Binding<Bool>,
          imagesUrls: [String],
@@ -31,27 +28,22 @@ struct FullScreenImageGallery: View {
     var body: some View {
         GeometryReader { proxy in
             ZStack {
-                if imagesLoaded {
-                    PageView(pages: images.map { ImageScrollView(frame: .init(origin: .zero, size: proxy.size), image: $0) },
-                             currentPage: $currentPage)
-                    VStack {
-                        Spacer()
-                        Text("\(currentPage+1)/\(images.count)")
-                            .font(.footnote)
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 2)
-                            .background {
-                                Color.black.opacity(0.7)
-                                    .clipShape(RoundedRectangle(cornerRadius: 4))
-                            }
-                            .padding(.bottom, max(.bottomArea, 10))
-                    }
-                } else {
-                    ProgressView()
-                        .tint(.white)
+                PageView(pages: imagesUrls.map { ImageScrollView(frame: .init(origin: .zero, size: proxy.size), url: $0) },
+                         currentPage: $currentPage)
+                VStack {
+                    Spacer()
+                    Text("\(currentPage+1)/\(imagesUrls.count)")
+                        .font(.footnote)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 2)
+                        .background {
+                            Color.black.opacity(0.7)
+                                .clipShape(RoundedRectangle(cornerRadius: 4))
+                        }
+                        .padding(.bottom, max(.bottomArea, 10))
                 }
-                
+
                 HStack(alignment: .top) {
                     Spacer()
                     VStack {
@@ -71,19 +63,9 @@ struct FullScreenImageGallery: View {
                     }
                 }
             }
-            .onAppear {
-                loadImages()
-            }
         }
         .animation(.easeIn, value: showView)
         .background(.black)
         .edgesIgnoringSafeArea(.all)
-    }
-    
-    private func loadImages() {
-        UIImage.fromUrls(imagesUrls) { arr in
-            images = arr
-            imagesLoaded = true
-        }
     }
 }

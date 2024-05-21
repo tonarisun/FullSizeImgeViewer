@@ -17,8 +17,10 @@ protocol ImageScrollViewDelegate: UIScrollViewDelegate {
 
 final class ImageScrollView: UIScrollView {
     // MARK: - Properties
-    private let image: UIImage
+    private let url: String
+    private var image = UIImage()
     private var zoomView: UIImageView?
+    private let loader = UIActivityIndicatorView()
     private var pointToCenterAfterResize: CGPoint = CGPoint.zero
     private var scaleToRestoreAfterResize: CGFloat = 1
     private weak var imageScrollViewDelegate: ImageScrollViewDelegate?
@@ -38,8 +40,8 @@ final class ImageScrollView: UIScrollView {
     }
 
     // MARK: - Initialization
-    public init(frame: CGRect, image: UIImage) {
-        self.image = image
+    public init(frame: CGRect, url: String) {
+        self.url = url
         super.init(frame: frame)
         
         initialize()
@@ -56,8 +58,17 @@ final class ImageScrollView: UIScrollView {
         bounces = true
         decelerationRate = UIScrollView.DecelerationRate.fast
         delegate = self
+        setupLoader()
         
         display()
+    }
+    
+    private func setupLoader() {
+        loader.hidesWhenStopped = true
+        loader.color = .white
+        loader.startAnimating()
+        loader.frame = bounds
+        addSubview(loader)
     }
     
     // MARK: - Set Max Min Zoom
@@ -154,19 +165,37 @@ final class ImageScrollView: UIScrollView {
             zoomView.removeFromSuperview()
         }
         
-        zoomView = UIImageView(image: image)
-        
-        guard let unwrappedView = zoomView else { return }
-        
-        unwrappedView.isUserInteractionEnabled = true
-        addSubview(unwrappedView)
-        
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(ImageScrollView.doubleTapGestureRecognizer(_:)))
-        tapGesture.numberOfTapsRequired = 2
-        unwrappedView.addGestureRecognizer(tapGesture)
-        
-        configureImageForSize()
-        adjustFrameToCenter()
+        ImageCacheManager.instance.getImageWithUrl(url) { optionalImage in
+            DispatchQueue.main.async { [weak self] in
+                self?.loader.stopAnimating()
+                guard let self = self,
+                let image = optionalImage else {
+                    let label = UILabel()
+                    label.textColor = .white
+                    label.font = UIFont(descriptor: .preferredFontDescriptor(withTextStyle: .caption1), size: 16)
+                    label.text = "Failed to load image..."
+                    label.textAlignment = .center
+                    label.frame = self?.bounds ?? .zero
+                    self?.addSubview(label)
+                    return
+                }
+
+                self.image = image
+                zoomView = UIImageView(image: self.image)
+                guard let unwrappedView = zoomView else { return }
+                
+                unwrappedView.isUserInteractionEnabled = true
+                addSubview(unwrappedView)
+                
+                let tapGesture = UITapGestureRecognizer(target: self, action: #selector(ImageScrollView.doubleTapGestureRecognizer(_:)))
+                tapGesture.numberOfTapsRequired = 2
+                unwrappedView.addGestureRecognizer(tapGesture)
+                
+                
+                self.configureImageForSize()
+                self.adjustFrameToCenter()
+            }
+        }
     }
     
     // MARK: - Gesture
