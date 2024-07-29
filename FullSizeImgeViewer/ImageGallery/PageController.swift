@@ -7,7 +7,6 @@
 //
 //
 
-import Foundation
 import SwiftUI
 
 struct PageView: UIViewControllerRepresentable {
@@ -49,6 +48,7 @@ struct PageView: UIViewControllerRepresentable {
             self.controllers = pages.map {
                 let controller = UIViewController()
                 controller.view = $0
+                controller.view.contentMode = .scaleAspectFill
                 return controller
             }
         }
@@ -76,8 +76,7 @@ struct PageView: UIViewControllerRepresentable {
         func pageViewController(_ pageViewController: UIPageViewController, didFinishAnimating finished: Bool, previousViewControllers: [UIViewController], transitionCompleted completed: Bool) {
             if completed,
                let currentViewController = pageViewController.viewControllers?.first,
-               let currentIndex = controllers.firstIndex(of: currentViewController)
-            {
+               let currentIndex = controllers.firstIndex(of: currentViewController) {
                 parent.currentPage = currentIndex
             }
         }

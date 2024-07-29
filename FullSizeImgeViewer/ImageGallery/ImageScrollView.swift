@@ -10,7 +10,6 @@
 import Foundation
 import UIKit
 
-// MARK: - ImageScrollViewDelegate Protocol
 protocol ImageScrollViewDelegate: UIScrollViewDelegate {
     func imageScrollViewDidChangeOrientation(imageScrollView: ImageScrollView)
 }
@@ -190,7 +189,6 @@ final class ImageScrollView: UIScrollView {
                 let tapGesture = UITapGestureRecognizer(target: self, action: #selector(ImageScrollView.doubleTapGestureRecognizer(_:)))
                 tapGesture.numberOfTapsRequired = 2
                 unwrappedView.addGestureRecognizer(tapGesture)
-                
                 
                 self.configureImageForSize()
                 self.adjustFrameToCenter()
